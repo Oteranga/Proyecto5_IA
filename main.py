@@ -1,48 +1,43 @@
+import CNN as CNN
 import torch
 import torch.nn as nn
 import torchvision
-import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
-import numpy as np
-import math
-import read_dataset as rd
 
-num_classes = 10
-learning_rate = 0.001
-num_epochs = 20
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-class CNN(nn.Module):
-    def __init__(self, num_classes = 4):
-        super(CNN, self).__init__()
+def train(model, optimizer, loss_fn, epochs, train_loader):
+  loss_vals = []
+  running_loss = 0.0
+  # train the model
+  total_step = len(train_loader)
 
-        #Input layer
-        self.layer1 = nn.Sequential(
-        nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=2),nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2, stride=2))
+  list_loss= []
+  list_time = []
+  j=0
 
-        #Hidden layer
-        self.layerH1 = nn.Sequential(
-        nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=2),nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2, stride=2))
-        self.layerH2 = nn.Sequential(
-        nn.Conv2d(32, 16, kernel_size=3, stride=1, padding=2),nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2, stride=2))
+  for epoch in range(epochs):
+    for i, (images) in enumerate(train_loader):
+      images = images.to(device)
+      # forward 
+      output = model(images)
+      loss   = loss_fn(output)
+      # change the params
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
 
-        #Output layer
-        self.layer2 = nn.Sequential(
-        nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),nn.ReLU(),
-        nn.MaxPool2d(kernel_size=2, stride=2))
+      list_loss.append(loss.item())
+      list_time.append(j)
+      j+=1
+              
+      if (i+1) % 100 == 0:
+              print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch+1, epochs, i+1, total_step, loss.item()))
+              
+  print('Finished Training Trainset')
+  return list_loss
 
-        self.fc = nn.Linear(7*7*32, num_classes)
-
-    def forward(self, x):
-        out = self.layer1(x)
-        out = self.layerH1(out)
-        out = self.layerH2(out)
-        out = self.layer2(out)
-        out = out.reshape(out.size(0), -1)
-        out = self.fc(out)
-        return out
-
-network = CNN()
-
+model = CNN().to(device)
+learning_rate = 0.0001
+optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+loss_method = nn.CrossEntropyLoss()
+epochs = 50
