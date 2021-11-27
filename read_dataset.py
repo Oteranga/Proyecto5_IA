@@ -1,11 +1,11 @@
 import torch
 from torchvision import transforms
 from PIL import Image
-import pandas as pd
 import glob
 import math
-import numpy as np
 import random
+
+batch_size = 64
 
 def read_images():
     covid = []
@@ -33,35 +33,26 @@ def read_images():
                 pneumonia.append(new_img)
                 lungs.append((new_img, 3))
     
-    train_size = math.ceil(len(lungs) * 0.7)
-    validate_size = math.floor(len(lungs) * 0.2)
-    test_size = math.floor(len(lungs) * 0.1)
+    training_size = math.ceil(len(lungs) * 0.7)
+    validation_size = math.floor(len(lungs) * 0.2)
+    testing_size = math.floor(len(lungs) * 0.1)
 
     random.shuffle(lungs)
-    return lungs, train_size, validate_size, test_size
+    return lungs, training_size, validation_size, testing_size
 
-def data_sets(lungs, train_size, validate_size, test_size):
+def get_data_sets(lungs, train_size, validation_size, test_size):
+    training_set = lungs[0:train_size]
+    validation_set = lungs[train_size+1:train_size+validation_size]
+    testing_set = lungs[train_size+validation_size+1:-1]
+    return training_set, validation_set, testing_set
 
-    training = torch.utils.data.DataLoader(dataset = lungs, batch_size = train_size, shuffle = False)
-    validation = torch.utils.data.DataLoader(dataset = lungs, batch_size = validate_size, shuffle = False)
-    testing = torch.utils.data.DataLoader(dataset = lungs, batch_size = test_size, shuffle = False)
 
-    return training, validation, testing
-
-def convert(data):
-    data_x = []
-
-    for img in data:
-        data_x.append(img[0])
-
-    return data_x
-
-def get_torch(data_x):
-    #set_x = np.array(data_x)
-    #set_x = set_x.reshape(size, 1, 28, 28)
-    #set_x = torch.from_numpy(set_x)
-    for val in data_x:
-        val = val.unsqueeze(0)
-
-    return data_x
+def get_data_loaders(training_set, validation_set, testing_set):
+    training_loader = torch.utils.data.DataLoader(
+        dataset = training_set, batch_size = batch_size, shuffle = False)
+    validation_loader = torch.utils.data.DataLoader(
+        dataset = validation_set, batch_size = batch_size, shuffle = False)
+    testing_loader = torch.utils.data.DataLoader(
+        dataset = testing_set, batch_size = batch_size, shuffle = False)
+    return training_loader, validation_loader, testing_loader
 

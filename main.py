@@ -1,43 +1,28 @@
-import CNN as CNN
 import torch
-import torch.nn as nn
-import torchvision
+import read_dataset as rd
+import cnn as cnn
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+lungs, training_size, validation_size, testing_size = rd.read_images()
 
-def train(model, optimizer, loss_fn, epochs, train_loader):
-  loss_vals = []
-  running_loss = 0.0
-  # train the model
-  total_step = len(train_loader)
+training_set, validation_set, testing_set = rd.get_data_sets(
+    lungs, training_size, validation_size, testing_size)
 
-  list_loss= []
-  list_time = []
-  j=0
+training_loader, validation_loader, testing_loader = rd.get_data_loaders(
+    training_set, validation_set, testing_set)
 
-  for epoch in range(epochs):
-    for i, (images) in enumerate(train_loader):
-      images = images.to(device)
-      # forward 
-      output = model(images)
-      loss   = loss_fn(output)
-      # change the params
-      optimizer.zero_grad()
-      loss.backward()
-      optimizer.step()
+""" print(len(training_loader))
+for i in range(len(training_loader)):
+    img,label = training_set[i]
+    print(img.shape) """
 
-      list_loss.append(loss.item())
-      list_time.append(j)
-      j+=1
-              
-      if (i+1) % 100 == 0:
-              print ('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch+1, epochs, i+1, total_step, loss.item()))
-              
-  print('Finished Training Trainset')
-  return list_loss
+# CNN TRAINING #
 
-model = CNN().to(device)
-learning_rate = 0.0001
-optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
-loss_method = nn.CrossEntropyLoss()
-epochs = 50
+num_classes = 4
+learning_rate = 0.001
+num_epochs = 15
+
+model = cnn.CNN(num_classes)
+loss_func = cnn.nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+cnn.train(model, optimizer, loss_func, num_epochs,training_loader)
+
