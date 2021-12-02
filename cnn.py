@@ -1,10 +1,5 @@
 import torch
 import torch.nn as nn
-import torchvision
-import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
-import numpy as np
-import math
 
 class CNN(nn.Module):
     def __init__(self, num_classes):
@@ -16,11 +11,11 @@ class CNN(nn.Module):
         self.layer2 = nn.Sequential(
             nn.Conv2d(8, 16, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=4))
         self.layer3 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=7, stride=1, padding=2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=3, stride=5))
         self.fc = nn.Linear(7*7*32, num_classes)
 
     def forward(self, x):

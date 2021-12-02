@@ -1,6 +1,6 @@
 import torch
 from torchvision import transforms
-from PIL import Image
+from PIL import Image, ImageOps
 import glob
 import math
 import random
@@ -8,10 +8,6 @@ import random
 batch_size = 64
 
 def read_images():
-    covid = []
-    lung_opacity = []
-    normal = []
-    pneumonia = []
     lungs = []
     directories = ["COVID", "Lung_Opacity", "Normal", "Viral Pneumonia"]
 
@@ -19,18 +15,14 @@ def read_images():
         path = "./Dataset/" + word + "/*"
         for img in glob.iglob(path):
             conver_tensor = transforms.ToTensor()
-            new_img = conver_tensor(Image.open(img))
+            new_img = conver_tensor(ImageOps.grayscale(Image.open(img)))
             if word == "COVID":
-                covid.append(new_img)
                 lungs.append((new_img, 0))
             elif word == "Lung_Opacity":
-                lung_opacity.append(new_img)
                 lungs.append((new_img, 1))
             elif word == "Normal":
-                normal.append(new_img)
                 lungs.append((new_img, 2))
             else:
-                pneumonia.append(new_img)
                 lungs.append((new_img, 3))
     
     training_size = math.ceil(len(lungs) * 0.7)
@@ -40,7 +32,7 @@ def read_images():
     random.shuffle(lungs)
     return lungs, training_size, validation_size, testing_size
 
-def get_data_sets(lungs, train_size, validation_size, test_size):
+def get_data_sets(lungs, train_size, validation_size):
     training_set = lungs[0:train_size]
     validation_set = lungs[train_size+1:train_size+validation_size]
     testing_set = lungs[train_size+validation_size+1:-1]
@@ -49,7 +41,7 @@ def get_data_sets(lungs, train_size, validation_size, test_size):
 
 def get_data_loaders(training_set, validation_set, testing_set):
     training_loader = torch.utils.data.DataLoader(
-        dataset = training_set, batch_size = batch_size, shuffle = False)
+        dataset = training_set, batch_size = batch_size, shuffle = True)
     validation_loader = torch.utils.data.DataLoader(
         dataset = validation_set, batch_size = batch_size, shuffle = False)
     testing_loader = torch.utils.data.DataLoader(
