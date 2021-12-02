@@ -1,6 +1,7 @@
 import torch
 import read_dataset as rd
 import cnn as cnn
+import plots as pl
 
 lungs, training_size, validation_size, testing_size = rd.read_images()
 
@@ -21,8 +22,9 @@ num_classes = 4
 learning_rate = 0.001
 num_epochs = 15
 
-model = cnn.CNN(num_classes).to(cnn.device)
+model = cnn.CNN(num_classes, "dropout").to(cnn.device)
 loss_func = cnn.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
 loss_list = cnn.train(model, optimizer, loss_func, num_epochs,training_loader)
+pl.plot_error(loss_list)
 
