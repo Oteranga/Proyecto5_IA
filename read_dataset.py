@@ -4,13 +4,13 @@ from PIL import Image, ImageOps
 import glob
 import math
 import random
+import os
 
 batch_size = 64
 
-def read_images():
+def read_full_images():
     lungs = []
     directories = ["COVID", "Lung_Opacity", "Normal", "Viral Pneumonia"]
-
     for word in directories:
         path = "./Dataset/" + word + "/*"
         for img in glob.iglob(path):
@@ -24,6 +24,40 @@ def read_images():
                 lungs.append((new_img, 2))
             else:
                 lungs.append((new_img, 3))
+    
+    training_size = math.ceil(len(lungs) * 0.7)
+    validation_size = math.floor(len(lungs) * 0.2)
+    testing_size = math.floor(len(lungs) * 0.1)
+
+    random.shuffle(lungs)
+    return lungs, training_size, validation_size, testing_size
+
+
+def read_partial_images(percentage):
+    path_, dirs, files = next(os.walk("./Dataset/Normal"))
+    file_count = len(files)
+    img_quant = percentage*file_count
+
+    lungs = []
+    directories = ["COVID", "Lung_Opacity", "Normal", "Viral Pneumonia"]
+    for word in directories:
+        path = "./Dataset/" + word + "/*"
+        i = 0
+        for img in glob.iglob(path):
+            if i<img_quant:
+                conver_tensor = transforms.ToTensor()
+                new_img = conver_tensor(ImageOps.grayscale(Image.open(img)))
+                if word == "COVID":
+                    lungs.append((new_img, 0))
+                elif word == "Lung_Opacity":
+                    lungs.append((new_img, 1))
+                elif word == "Normal":
+                    lungs.append((new_img, 2))
+                else:
+                    lungs.append((new_img, 3))
+                i += 1
+            else:
+                break
     
     training_size = math.ceil(len(lungs) * 0.7)
     validation_size = math.floor(len(lungs) * 0.2)
