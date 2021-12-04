@@ -37,7 +37,6 @@ def read_partial_images(percentage):
     path_, dirs, files = next(os.walk("./Dataset/Normal"))
     file_count = len(files)
     img_quant = percentage*file_count
-
     lungs = []
     directories = ["COVID", "Lung_Opacity", "Normal", "Viral Pneumonia"]
     for word in directories:

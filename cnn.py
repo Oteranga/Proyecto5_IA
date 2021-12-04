@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from ignite.engine import Engine, Events
-from ignite.handlers import EarlyStopping
+#from ignite.engine import Engine, Events
+#from ignite.handlers import EarlyStopping
 
 class CNN(nn.Module):
     def __init__(self, num_classes, type):
@@ -77,12 +77,15 @@ class CNN(nn.Module):
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-def train(model,optimizer,loss_func,num_epochs,training_loader, early_stop):
+def training(model,optimizer,loss_func,num_epochs,training_loader, testing_loader, early_stop):
     print('Training CNN...')
+    # for early stopping
+    the_last_loss = 100
+    patience = 2
+    trigger_times = 0
+    # for loss
     total_step = len(training_loader)
     loss_list = []
-    time_list = []
-    j = 0
     for epoch in range(num_epochs):
         for i, (images, labels) in enumerate(training_loader):
             images = images.to(device)
@@ -95,24 +98,36 @@ def train(model,optimizer,loss_func,num_epochs,training_loader, early_stop):
             optimizer.step() #updates
             
             loss_list.append(loss.item())
-            time_list.append(j)
-            j += 1
             
             if(i+1)%100 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                     .format(epoch+1, num_epochs, i+1, total_step, loss.item()))
+        
+        if early_stop is True:
+            loss_list,the_current_loss = testing(model, loss_func, testing_loader)
+            print('The current loss:', the_current_loss)
+            if the_current_loss > the_last_loss:
+                trigger_times += 1
+                print('trigger times:', trigger_times)
+                if trigger_times >= patience:
+                    print('Early stopping!\nStart to test process.')
+                    return model
+            else:
+                print('trigger times: 0')
+                trigger_times = 0
+            the_last_loss = the_current_loss
 
-        
-        
     print('Finished Training Trainset')
     return loss_list
 
-def testing(model, loss_func, testing_loader, testing_dataset):
+# CNN TESTING FUNC #
+
+def testing(model, loss_func, testing_loader):
     print('Testing CNN...')
     model.eval()
     # for loss
-    counter = 0
     loss_list = []
+    loss_total = 0
     # for accuracy
     correct = 0
     total = 0
@@ -124,9 +139,10 @@ def testing(model, loss_func, testing_loader, testing_dataset):
             # for loss
             loss = loss_func(out,labels)            
             loss_list.append(loss.item())
+            loss_total += loss.item()
             # for accuracy
             _, predicted = torch.max(out.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
         print('Accuracy of the model on the test images: {} %'.format(100 * correct / total))
-        return loss_list
+        return loss_list, loss_total/len(testing_loader)
