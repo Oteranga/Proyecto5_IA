@@ -24,12 +24,12 @@ class CNN(nn.Module):
             nn.Conv2d(8, 16, kernel_size=5, stride=1, padding=2),
             nn.BatchNorm2d(16),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=4))
         self.layer3 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=7, stride=1, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=3, stride=5))
         
     def just_dropout(self):
         self.layer1 = nn.Sequential(
@@ -41,12 +41,12 @@ class CNN(nn.Module):
             nn.Conv2d(8, 16, kernel_size=5, stride=1, padding=2),
             nn.Dropout(0.2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=4))
         self.layer3 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=7, stride=1, padding=2),
             nn.Dropout(0.2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=3, stride=5))
     
     def batch_and_drop(self):
         self.layer1 = nn.Sequential(
@@ -58,11 +58,11 @@ class CNN(nn.Module):
         self.layer2 = nn.Sequential(
             nn.Conv2d(8, 16, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))
+            nn.MaxPool2d(kernel_size=2, stride=4))
         self.layer3 = nn.Sequential(
             nn.Conv2d(16, 32, kernel_size=7, stride=1, padding=2),
             nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2))            
+            nn.MaxPool2d(kernel_size=3, stride=5))            
 
     def forward(self, x):
         out = self.layer1(x)
@@ -76,6 +76,7 @@ class CNN(nn.Module):
 # CNN TRAINING FUNC #
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+trigger_times = 0
 
 def training(model,optimizer,loss_func,num_epochs,training_loader, validation_loader, early_stop):
     print('Training CNN...')
@@ -116,7 +117,6 @@ def training(model,optimizer,loss_func,num_epochs,training_loader, validation_lo
     return loss_training, loss_validation
 
 def early_stopping(model, current_val_loss, last_val_loss):
-    trigger_times = 0
     patience = 5
     print('The current loss:', current_val_loss)
     if current_val_loss > last_val_loss:
